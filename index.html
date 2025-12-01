@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>네이버 벡터맵 테스트 (feat. 호랭이) - 세밀 줌 & 라벨 온오프 & 거리 측정</title>
+    <title>네이버 벡터맵 테스트 (feat. 호랭이) - 라벨 온오프 & 좌표 표시 & 거리 측정</title>
     <style>
         body { margin: 0; padding: 0; height: 100vh; font-family: 'Malgun Gothic', sans-serif; }
         #map { width: 100%; height: 100%; }
@@ -86,7 +86,7 @@
     <div id="map"></div>
     
     <script>
-        // 호랭이 Key ID 박제! (사용 시 본인의 유효한 Client ID로 변경해야 함)
+        // 호랭이 Key ID 박제!
         const NCP_KEY_ID = 'q1d23mmkof';
 
         const script = document.createElement('script');
@@ -125,10 +125,12 @@
                     labelLayer.setMap(null);
                     labelToggleBtn.textContent = '라벨 보이기';
                     isLabelVisible = false;
+                    console.log("라벨 숨김!");
                 } else {
                     labelLayer.setMap(map);
                     labelToggleBtn.textContent = '라벨 숨기기';
                     isLabelVisible = true;
+                    console.log("라벨 보임!");
                 }
             });
 
@@ -152,6 +154,7 @@
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
                 const distance = R * c; // km 단위
                 
+                // 1km 미만이면 m 단위로 표시
                 if (distance < 1) {
                     return (distance * 1000).toFixed(2) + ' m';
                 } else {
@@ -159,7 +162,7 @@
                 }
             }
 
-            // 지도 클릭 이벤트 (좌표 표시 및 거리 측정 로직)
+            // 지도 클릭 이벤트
             naver.maps.Event.addListener(map, 'click', function(e) {
                 const lat = e.latlng.lat().toFixed(6);
                 const lng = e.latlng.lng().toFixed(6);
@@ -180,7 +183,7 @@
                         });
                         markers.push(marker);
                     } else {
-                        // 두 번째 좌표 설정 및 거리 계산
+                        // 두 번째 좌표 설정
                         secondCoord = { lat: lat, lng: lng };
                         const distance = calculateDistance(
                             parseFloat(firstCoord.lat), 
@@ -226,6 +229,8 @@
                     // 일반 모드일 때
                     document.getElementById('coordDisplay').textContent = `위도: ${lat}, 경도: ${lng}`;
                 }
+                
+                console.log(`클릭된 좌표: 위도 ${lat}, 경도 ${lng}`);
             });
 
             // 거리 측정 버튼 클릭 이벤트
@@ -247,6 +252,7 @@
                     distanceMeasureBtn.classList.add('measuring');
                     distanceMeasureBtn.textContent = '측정 중...';
                     document.getElementById('coordDisplay').textContent = '첫 번째 좌표를 클릭하세요.';
+                    console.log("거리 측정 모드 시작");
                 } else {
                     // 측정 취소
                     isMeasuring = false;
@@ -264,54 +270,11 @@
                     distanceMeasureBtn.classList.remove('measuring');
                     distanceMeasureBtn.textContent = '거리 측정';
                     document.getElementById('coordDisplay').textContent = '지도를 클릭하면 좌표가 나와요!';
+                    console.log("거리 측정 모드 취소");
                 }
             });
 
-            // ----------------------------------------------------
-            // ⭐ [추가된 부분] 마우스 휠 세밀 확대/축소 기능 구현
-            // ----------------------------------------------------
-            
-            const **ZOOM_STEP** = 0.2; // 휠 한 번에 줌 레벨을 0.2씩 변경
-            const **FINE_GRAIN_ZOOM** = 0.5; // 한 번의 휠 이벤트로 움직일 수 있는 최대 줌 레벨 변화 폭 제한
-            let **currentZoomLevel** = map.getZoom();
-            
-            // 초기 줌 레벨을 실수형 변수에 저장
-            map.setZoom(currentZoomLevel, false); 
-
-            // 휠 이벤트에 대한 리스너를 지도에 직접 추가하여 기본 동작을 덮어쓰기
-            naver.maps.Event.addDOMListener(map.getPanes().overlayLayer, 'wheel', function(e) {
-                // 네이티브 확대/축소 동작 방지
-                e.preventDefault(); 
-                e.stopPropagation();
-
-                const isZoomIn = e.deltaY < 0; // 마우스 휠 위로 (확대)
-                let targetZoom = isZoomIn 
-                    ? currentZoomLevel + ZOOM_STEP 
-                    : currentZoomLevel - ZOOM_STEP; 
-
-                // 네이버 지도 줌 레벨 범위 (1 ~ 20)를 벗어나지 않도록 클램프
-                let newZoomLevel = Math.min(20, Math.max(1, targetZoom));
-                
-                // 급격한 줌 변화 방지 (필요 시 주석 처리 가능)
-                if (Math.abs(newZoomLevel - currentZoomLevel) > FINE_GRAIN_ZOOM) {
-                    newZoomLevel = isZoomIn 
-                        ? currentZoomLevel + FINE_GRAIN_ZOOM 
-                        : currentZoomLevel - FINE_GRAIN_ZOOM;
-                }
-                
-                // 최종 줌 레벨을 설정 (애니메이션 효과 적용: true)
-                map.setZoom(newZoomLevel, true);
-                
-                // 새로운 줌 레벨 업데이트
-                currentZoomLevel = newZoomLevel;
-            });
-            
-            // 줌 레벨이 변경될 때마다 currentZoomLevel을 동기화하여 정확성을 유지
-            naver.maps.Event.addListener(map, 'zoom_changed', function(zoom) {
-                currentZoomLevel = zoom;
-            });
-
-            console.log("네이버 벡터맵 로드 및 초기화 성공! 모든 기능(라벨 토글, 좌표/거리, 세밀 줌) 추가됨.");
+            console.log("네이버 벡터맵 로드 및 초기화 성공! 라벨 토글, 좌표 표시, 거리 측정 기능 추가됨.");
         };
 
         script.onerror = function() {

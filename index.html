@@ -1,288 +1,325 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>네이버 벡터맵 테스트 (feat. 호랭이) - 라벨 온오프 & 좌표 표시 & 거리 측정</title>
-    <style>
-        body { margin: 0; padding: 0; height: 100vh; font-family: 'Malgun Gothic', sans-serif; }
-        #map { width: 100%; height: 100%; }
-        #status {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 99, 71, 0.9);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 14px;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        #labelToggleBtn {
-            position: absolute;
-            top: 10px;
-            left: 170px;
-            background: #4A90E2;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: background 0.3s ease;
-        }
-        #labelToggleBtn:hover {
-            background: #357ABD;
-        }
-        #distanceMeasureBtn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: #FF5722;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: background 0.3s ease;
-        }
-        #distanceMeasureBtn:hover {
-            background: #E64A19;
-        }
-        #distanceMeasureBtn.measuring {
-            background: #4CAF50;
-        }
-        #distanceMeasureBtn.measuring:hover {
-            background: #388E3C;
-        }
-        #coordDisplay {
-            position: absolute;
-            top: 50px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #FFC107;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 14px;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            min-width: 250px;
-            text-align: center;
-            line-height: 1.5;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>네이버 벡터맵 테스트 (feat. 호랭이) - 세밀 줌 & 라벨 온오프 & 거리 측정</title>
+    <style>
+        body { margin: 0; padding: 0; height: 100vh; font-family: 'Malgun Gothic', sans-serif; }
+        #map { width: 100%; height: 100%; }
+        #status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 99, 71, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #labelToggleBtn {
+            position: absolute;
+            top: 10px;
+            left: 170px;
+            background: #4A90E2;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.3s ease;
+        }
+        #labelToggleBtn:hover {
+            background: #357ABD;
+        }
+        #distanceMeasureBtn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #FF5722;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.3s ease;
+        }
+        #distanceMeasureBtn:hover {
+            background: #E64A19;
+        }
+        #distanceMeasureBtn.measuring {
+            background: #4CAF50;
+        }
+        #distanceMeasureBtn.measuring:hover {
+            background: #388E3C;
+        }
+        #coordDisplay {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #FFC107;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            min-width: 250px;
+            text-align: center;
+            line-height: 1.5;
+        }
+    </style>
 </head>
 <body>
-    <div id="status">API 키 확인 중...</div>
-    <button id="labelToggleBtn">라벨 숨기기</button>
-    <button id="distanceMeasureBtn">거리 측정</button>
-    <div id="coordDisplay">지도를 클릭하면 좌표가 나와요!</div>
-    <div id="map"></div>
-    
-    <script>
-        // 호랭이 Key ID 박제!
-        const NCP_KEY_ID = 'q1d23mmkof';
+    <div id="status">API 키 확인 중...</div>
+    <button id="labelToggleBtn">라벨 숨기기</button>
+    <button id="distanceMeasureBtn">거리 측정</button>
+    <div id="coordDisplay">지도를 클릭하면 좌표가 나와요!</div>
+    <div id="map"></div>
+    
+    <script>
+        // 호랭이 Key ID 박제! (사용 시 본인의 유효한 Client ID로 변경해야 함)
+        const NCP_KEY_ID = 'q1d23mmkof';
 
-        const script = document.createElement('script');
-        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NCP_KEY_ID}&vmode=3`;
+        const script = document.createElement('script');
+        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NCP_KEY_ID}&vmode=3`;
 
-        script.onload = function() {
-            document.getElementById('status').textContent = 'API 로드 성공! 벡터 지도 초기화 중...';
-            document.getElementById('status').style.background = 'rgba(60, 179, 113, 0.9)';
+        script.onload = function() {
+            document.getElementById('status').textContent = 'API 로드 성공! 벡터 지도 초기화 중...';
+            document.getElementById('status').style.background = 'rgba(60, 179, 113, 0.9)';
 
-            const mapOptions = {
-                center: new naver.maps.LatLng(37.5665, 126.9780),
-                zoom: 15,
-                zoomControl: true,
-                zoomControlOptions: {
-                    position: naver.maps.Position.TOP_RIGHT
-                },
-                mapTypes: new naver.maps.MapTypeRegistry({
-                    'normal': naver.maps.NaverStyleMapTypeOptions.getVectorMap()
-                })
-            };
+            const mapOptions = {
+                center: new naver.maps.LatLng(37.5665, 126.9780),
+                zoom: 15,
+                zoomControl: true,
+                zoomControlOptions: {
+                    position: naver.maps.Position.TOP_RIGHT
+                },
+                mapTypes: new naver.maps.MapTypeRegistry({
+                    'normal': naver.maps.NaverStyleMapTypeOptions.getVectorMap()
+                })
+            };
 
-            const map = new naver.maps.Map('map', mapOptions);
-            map.setMapTypeId('normal');
-            
-            const labelLayer = new naver.maps.LabelLayer();
-            labelLayer.setMap(map);
+            const map = new naver.maps.Map('map', mapOptions);
+            map.setMapTypeId('normal');
+            
+            const labelLayer = new naver.maps.LabelLayer();
+            labelLayer.setMap(map);
 
-            document.getElementById('status').style.display = 'none';
+            document.getElementById('status').style.display = 'none';
 
-            // 라벨 토글 기능
-            const labelToggleBtn = document.getElementById('labelToggleBtn');
-            let isLabelVisible = true;
+            // 라벨 토글 기능
+            const labelToggleBtn = document.getElementById('labelToggleBtn');
+            let isLabelVisible = true;
 
-            labelToggleBtn.addEventListener('click', function() {
-                if (isLabelVisible) {
-                    labelLayer.setMap(null);
-                    labelToggleBtn.textContent = '라벨 보이기';
-                    isLabelVisible = false;
-                    console.log("라벨 숨김!");
-                } else {
-                    labelLayer.setMap(map);
-                    labelToggleBtn.textContent = '라벨 숨기기';
-                    isLabelVisible = true;
-                    console.log("라벨 보임!");
-                }
-            });
+            labelToggleBtn.addEventListener('click', function() {
+                if (isLabelVisible) {
+                    labelLayer.setMap(null);
+                    labelToggleBtn.textContent = '라벨 보이기';
+                    isLabelVisible = false;
+                } else {
+                    labelLayer.setMap(map);
+                    labelToggleBtn.textContent = '라벨 숨기기';
+                    isLabelVisible = true;
+                }
+            });
 
-            // 거리 측정 기능
-            const distanceMeasureBtn = document.getElementById('distanceMeasureBtn');
-            let isMeasuring = false;
-            let firstCoord = null;
-            let secondCoord = null;
-            let markers = [];
-            let line = null;
+            // 거리 측정 기능
+            const distanceMeasureBtn = document.getElementById('distanceMeasureBtn');
+            let isMeasuring = false;
+            let firstCoord = null;
+            let secondCoord = null;
+            let markers = [];
+            let line = null;
 
-            // 거리 계산 함수 (Haversine 공식 사용)
-            function calculateDistance(lat1, lng1, lat2, lng2) {
-                const R = 6371; // 지구 반경 (km)
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLng = (lng2 - lng1) * Math.PI / 180;
-                const a = 
-                    Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLng/2) * Math.sin(dLng/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                const distance = R * c; // km 단위
-                
-                // 1km 미만이면 m 단위로 표시
-                if (distance < 1) {
-                    return (distance * 1000).toFixed(2) + ' m';
-                } else {
-                    return distance.toFixed(2) + ' km';
-                }
-            }
+            // 거리 계산 함수 (Haversine 공식 사용)
+            function calculateDistance(lat1, lng1, lat2, lng2) {
+                const R = 6371; // 지구 반경 (km)
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = 
+                    Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const distance = R * c; // km 단위
+                
+                if (distance < 1) {
+                    return (distance * 1000).toFixed(2) + ' m';
+                } else {
+                    return distance.toFixed(2) + ' km';
+                }
+            }
 
-            // 지도 클릭 이벤트
-            naver.maps.Event.addListener(map, 'click', function(e) {
-                const lat = e.latlng.lat().toFixed(6);
-                const lng = e.latlng.lng().toFixed(6);
-                
-                if (isMeasuring) {
-                    // 거리 측정 모드일 때
-                    if (!firstCoord) {
-                        // 첫 번째 좌표 설정
-                        firstCoord = { lat: lat, lng: lng };
-                        document.getElementById('coordDisplay').innerHTML = 
-                            `첫 번째 좌표:<br>위도: ${lat}, 경도: ${lng}<br>두 번째 좌표를 클릭하세요.`;
-                        
-                        // 첫 번째 마커 추가
-                        const marker = new naver.maps.Marker({
-                            position: new naver.maps.LatLng(lat, lng),
-                            map: map,
-                            title: '첫 번째 지점'
-                        });
-                        markers.push(marker);
-                    } else {
-                        // 두 번째 좌표 설정
-                        secondCoord = { lat: lat, lng: lng };
-                        const distance = calculateDistance(
-                            parseFloat(firstCoord.lat), 
-                            parseFloat(firstCoord.lng), 
-                            parseFloat(secondCoord.lat), 
-                            parseFloat(secondCoord.lng)
-                        );
-                        
-                        document.getElementById('coordDisplay').innerHTML = 
-                            `첫 번째 좌표:<br>위도: ${firstCoord.lat}, 경도: ${firstCoord.lng}<br><br>
-                             두 번째 좌표:<br>위도: ${secondCoord.lat}, 경도: ${secondCoord.lng}<br><br>
-                             직선 거리: ${distance}`;
-                        
-                        // 두 번째 마커 추가
-                        const marker = new naver.maps.Marker({
-                            position: new naver.maps.LatLng(lat, lng),
-                            map: map,
-                            title: '두 번째 지점'
-                        });
-                        markers.push(marker);
-                        
-                        // 두 점 사이에 선 그리기
-                        if (line) {
-                            line.setMap(null);
-                        }
-                        line = new naver.maps.Polyline({
-                            map: map,
-                            path: [
-                                new naver.maps.LatLng(firstCoord.lat, firstCoord.lng),
-                                new naver.maps.LatLng(secondCoord.lat, secondCoord.lng)
-                            ],
-                            strokeColor: '#FF5722',
-                            strokeWeight: 3,
-                            strokeOpacity: 0.8
-                        });
-                        
-                        // 측정 완료 후 상태 초기화
-                        isMeasuring = false;
-                        distanceMeasureBtn.classList.remove('measuring');
-                        distanceMeasureBtn.textContent = '거리 측정';
-                    }
-                } else {
-                    // 일반 모드일 때
-                    document.getElementById('coordDisplay').textContent = `위도: ${lat}, 경도: ${lng}`;
-                }
-                
-                console.log(`클릭된 좌표: 위도 ${lat}, 경도 ${lng}`);
-            });
+            // 지도 클릭 이벤트 (좌표 표시 및 거리 측정 로직)
+            naver.maps.Event.addListener(map, 'click', function(e) {
+                const lat = e.latlng.lat().toFixed(6);
+                const lng = e.latlng.lng().toFixed(6);
+                
+                if (isMeasuring) {
+                    // 거리 측정 모드일 때
+                    if (!firstCoord) {
+                        // 첫 번째 좌표 설정
+                        firstCoord = { lat: lat, lng: lng };
+                        document.getElementById('coordDisplay').innerHTML = 
+                            `첫 번째 좌표:<br>위도: ${lat}, 경도: ${lng}<br>두 번째 좌표를 클릭하세요.`;
+                        
+                        // 첫 번째 마커 추가
+                        const marker = new naver.maps.Marker({
+                            position: new naver.maps.LatLng(lat, lng),
+                            map: map,
+                            title: '첫 번째 지점'
+                        });
+                        markers.push(marker);
+                    } else {
+                        // 두 번째 좌표 설정 및 거리 계산
+                        secondCoord = { lat: lat, lng: lng };
+                        const distance = calculateDistance(
+                            parseFloat(firstCoord.lat), 
+                            parseFloat(firstCoord.lng), 
+                            parseFloat(secondCoord.lat), 
+                            parseFloat(secondCoord.lng)
+                        );
+                        
+                        document.getElementById('coordDisplay').innerHTML = 
+                            `첫 번째 좌표:<br>위도: ${firstCoord.lat}, 경도: ${firstCoord.lng}<br><br>
+                             두 번째 좌표:<br>위도: ${secondCoord.lat}, 경도: ${secondCoord.lng}<br><br>
+                             직선 거리: ${distance}`;
+                        
+                        // 두 번째 마커 추가
+                        const marker = new naver.maps.Marker({
+                            position: new naver.maps.LatLng(lat, lng),
+                            map: map,
+                            title: '두 번째 지점'
+                        });
+                        markers.push(marker);
+                        
+                        // 두 점 사이에 선 그리기
+                        if (line) {
+                            line.setMap(null);
+                        }
+                        line = new naver.maps.Polyline({
+                            map: map,
+                            path: [
+                                new naver.maps.LatLng(firstCoord.lat, firstCoord.lng),
+                                new naver.maps.LatLng(secondCoord.lat, secondCoord.lng)
+                            ],
+                            strokeColor: '#FF5722',
+                            strokeWeight: 3,
+                            strokeOpacity: 0.8
+                        });
+                        
+                        // 측정 완료 후 상태 초기화
+                        isMeasuring = false;
+                        distanceMeasureBtn.classList.remove('measuring');
+                        distanceMeasureBtn.textContent = '거리 측정';
+                    }
+                } else {
+                    // 일반 모드일 때
+                    document.getElementById('coordDisplay').textContent = `위도: ${lat}, 경도: ${lng}`;
+                }
+            });
 
-            // 거리 측정 버튼 클릭 이벤트
-            distanceMeasureBtn.addEventListener('click', function() {
-                if (!isMeasuring) {
-                    // 측정 시작
-                    isMeasuring = true;
-                    firstCoord = null;
-                    secondCoord = null;
-                    
-                    // 기존 마커와 선 제거
-                    markers.forEach(marker => marker.setMap(null));
-                    markers = [];
-                    if (line) {
-                        line.setMap(null);
-                        line = null;
-                    }
-                    
-                    distanceMeasureBtn.classList.add('measuring');
-                    distanceMeasureBtn.textContent = '측정 중...';
-                    document.getElementById('coordDisplay').textContent = '첫 번째 좌표를 클릭하세요.';
-                    console.log("거리 측정 모드 시작");
-                } else {
-                    // 측정 취소
-                    isMeasuring = false;
-                    firstCoord = null;
-                    secondCoord = null;
-                    
-                    // 마커와 선 제거
-                    markers.forEach(marker => marker.setMap(null));
-                    markers = [];
-                    if (line) {
-                        line.setMap(null);
-                        line = null;
-                    }
-                    
-                    distanceMeasureBtn.classList.remove('measuring');
-                    distanceMeasureBtn.textContent = '거리 측정';
-                    document.getElementById('coordDisplay').textContent = '지도를 클릭하면 좌표가 나와요!';
-                    console.log("거리 측정 모드 취소");
-                }
-            });
+            // 거리 측정 버튼 클릭 이벤트
+            distanceMeasureBtn.addEventListener('click', function() {
+                if (!isMeasuring) {
+                    // 측정 시작
+                    isMeasuring = true;
+                    firstCoord = null;
+                    secondCoord = null;
+                    
+                    // 기존 마커와 선 제거
+                    markers.forEach(marker => marker.setMap(null));
+                    markers = [];
+                    if (line) {
+                        line.setMap(null);
+                        line = null;
+                    }
+                    
+                    distanceMeasureBtn.classList.add('measuring');
+                    distanceMeasureBtn.textContent = '측정 중...';
+                    document.getElementById('coordDisplay').textContent = '첫 번째 좌표를 클릭하세요.';
+                } else {
+                    // 측정 취소
+                    isMeasuring = false;
+                    firstCoord = null;
+                    secondCoord = null;
+                    
+                    // 마커와 선 제거
+                    markers.forEach(marker => marker.setMap(null));
+                    markers = [];
+                    if (line) {
+                        line.setMap(null);
+                        line = null;
+                    }
+                    
+                    distanceMeasureBtn.classList.remove('measuring');
+                    distanceMeasureBtn.textContent = '거리 측정';
+                    document.getElementById('coordDisplay').textContent = '지도를 클릭하면 좌표가 나와요!';
+                }
+            });
 
-            console.log("네이버 벡터맵 로드 및 초기화 성공! 라벨 토글, 좌표 표시, 거리 측정 기능 추가됨.");
-        };
+            // ----------------------------------------------------
+            // ⭐ [추가된 부분] 마우스 휠 세밀 확대/축소 기능 구현
+            // ----------------------------------------------------
+            
+            const **ZOOM_STEP** = 0.2; // 휠 한 번에 줌 레벨을 0.2씩 변경
+            const **FINE_GRAIN_ZOOM** = 0.5; // 한 번의 휠 이벤트로 움직일 수 있는 최대 줌 레벨 변화 폭 제한
+            let **currentZoomLevel** = map.getZoom();
+            
+            // 초기 줌 레벨을 실수형 변수에 저장
+            map.setZoom(currentZoomLevel, false); 
 
-        script.onerror = function() {
-            document.getElementById('status').textContent = 'API 로드 실패! 네이버 Key ID 또는 웹 서비스 URL을 확인해주세요. ㅠㅠ';
-            document.getElementById('status').style.background = 'red';
-            console.error("네이버 지도 API 로드 실패!");
-        };
-        document.head.appendChild(script);
-    </script>
+            // 휠 이벤트에 대한 리스너를 지도에 직접 추가하여 기본 동작을 덮어쓰기
+            naver.maps.Event.addDOMListener(map.getPanes().overlayLayer, 'wheel', function(e) {
+                // 네이티브 확대/축소 동작 방지
+                e.preventDefault(); 
+                e.stopPropagation();
+
+                const isZoomIn = e.deltaY < 0; // 마우스 휠 위로 (확대)
+                let targetZoom = isZoomIn 
+                    ? currentZoomLevel + ZOOM_STEP 
+                    : currentZoomLevel - ZOOM_STEP; 
+
+                // 네이버 지도 줌 레벨 범위 (1 ~ 20)를 벗어나지 않도록 클램프
+                let newZoomLevel = Math.min(20, Math.max(1, targetZoom));
+                
+                // 급격한 줌 변화 방지 (필요 시 주석 처리 가능)
+                if (Math.abs(newZoomLevel - currentZoomLevel) > FINE_GRAIN_ZOOM) {
+                    newZoomLevel = isZoomIn 
+                        ? currentZoomLevel + FINE_GRAIN_ZOOM 
+                        : currentZoomLevel - FINE_GRAIN_ZOOM;
+                }
+                
+                // 최종 줌 레벨을 설정 (애니메이션 효과 적용: true)
+                map.setZoom(newZoomLevel, true);
+                
+                // 새로운 줌 레벨 업데이트
+                currentZoomLevel = newZoomLevel;
+            });
+            
+            // 줌 레벨이 변경될 때마다 currentZoomLevel을 동기화하여 정확성을 유지
+            naver.maps.Event.addListener(map, 'zoom_changed', function(zoom) {
+                currentZoomLevel = zoom;
+            });
+
+            console.log("네이버 벡터맵 로드 및 초기화 성공! 모든 기능(라벨 토글, 좌표/거리, 세밀 줌) 추가됨.");
+        };
+
+        script.onerror = function() {
+            document.getElementById('status').textContent = 'API 로드 실패! 네이버 Key ID 또는 웹 서비스 URL을 확인해주세요. ㅠㅠ';
+            document.getElementById('status').style.background = 'red';
+            console.error("네이버 지도 API 로드 실패!");
+        };
+        document.head.appendChild(script);
+    </script>
 </body>
 </html>
